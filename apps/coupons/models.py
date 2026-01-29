@@ -1,5 +1,6 @@
 """
 Coupon models for the E-commerce Backend.
+Modelos de cupom para o Backend E-commerce.
 """
 
 from decimal import Decimal
@@ -14,6 +15,7 @@ from apps.core.models import BaseModel
 class Coupon(BaseModel):
     """
     Discount coupon model.
+    Modelo de cupom de desconto.
     """
 
     DISCOUNT_TYPE_CHOICES = [
@@ -53,6 +55,7 @@ class Coupon(BaseModel):
     )
 
     # Usage limits
+    # Limites de uso
     usage_limit = models.PositiveIntegerField(
         "Usage Limit",
         null=True,
@@ -66,11 +69,13 @@ class Coupon(BaseModel):
     times_used = models.PositiveIntegerField("Times Used", default=0)
 
     # Validity
+    # Validade
     is_active = models.BooleanField("Active", default=True)
     valid_from = models.DateTimeField("Valid From", default=timezone.now)
     valid_until = models.DateTimeField("Valid Until", null=True, blank=True)
 
     # Restrictions
+    # Restrições
     first_purchase_only = models.BooleanField(
         "First Purchase Only",
         default=False,
@@ -98,7 +103,10 @@ class Coupon(BaseModel):
 
     @property
     def is_valid(self):
-        """Check if coupon is currently valid."""
+        """
+        Check if coupon is currently valid.
+        Verifica se o cupom é válido atualmente.
+        """
         now = timezone.now()
 
         if not self.is_active:
@@ -116,7 +124,10 @@ class Coupon(BaseModel):
         return True
 
     def can_use(self, user, order_value):
-        """Check if user can use this coupon."""
+        """
+        Check if user can use this coupon.
+        Verifica se o usuário pode usar este cupom.
+        """
         if not self.is_valid:
             return False, "Coupon is not valid."
 
@@ -130,6 +141,7 @@ class Coupon(BaseModel):
                 return False, "This coupon is for first purchase only."
 
         # Check per-user limit
+        # Verifica limite por usuário
         user_usage = CouponUsage.objects.filter(coupon=self, user=user).count()
         if user_usage >= self.usage_limit_per_user:
             return False, "You have already used this coupon."
@@ -137,7 +149,10 @@ class Coupon(BaseModel):
         return True, None
 
     def calculate_discount(self, order_value):
-        """Calculate discount amount."""
+        """
+        Calculate discount amount.
+        Calcula o valor do desconto.
+        """
         if self.discount_type == "percentage":
             discount = order_value * (self.discount_value / 100)
             if self.max_discount:
@@ -150,6 +165,7 @@ class Coupon(BaseModel):
 class CouponUsage(models.Model):
     """
     Track coupon usage by users.
+    Rastreia o uso de cupons pelos usuários.
     """
 
     coupon = models.ForeignKey(

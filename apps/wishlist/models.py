@@ -1,5 +1,6 @@
 """
 Wishlist models for the E-commerce Backend.
+Modelos de lista de desejos para o Backend E-commerce.
 """
 
 from django.conf import settings
@@ -11,6 +12,7 @@ from apps.core.models import TimeStampedModel
 class WishlistItem(TimeStampedModel):
     """
     Wishlist item model.
+    Modelo de item da lista de desejos.
     """
 
     user = models.ForeignKey(

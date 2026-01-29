@@ -1,5 +1,6 @@
 """
 Views for the coupons app.
+Views para o app de cupons.
 """
 
 from rest_framework import permissions, status
@@ -15,6 +16,7 @@ from .serializers import CouponSerializer, CouponValidateSerializer
 class CouponValidateView(APIView):
     """
     Validate a coupon code.
+    Valida um código de cupom.
     """
 
     permission_classes = [permissions.IsAuthenticated]

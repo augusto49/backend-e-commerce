@@ -1,5 +1,6 @@
 """
 Notification models for the E-commerce Backend.
+Modelos de notificação para o Backend E-commerce.
 """
 
 from django.conf import settings
@@ -11,6 +12,7 @@ from apps.core.models import TimeStampedModel
 class Notification(TimeStampedModel):
     """
     User notifications.
+    Notificações do usuário.
     """
 
     TYPE_CHOICES = [
@@ -52,6 +54,7 @@ class Notification(TimeStampedModel):
 class NotificationTemplate(TimeStampedModel):
     """
     Email/SMS notification templates.
+    Modelos de notificação de e-mail/SMS.
     """
 
     CHANNEL_CHOICES = [

@@ -1,5 +1,6 @@
 """
 Audit models for the E-commerce Backend.
+Modelos de auditoria para o Backend E-commerce.
 """
 
 from django.conf import settings
@@ -13,6 +14,7 @@ from apps.core.models import TimeStampedModel
 class AuditLog(TimeStampedModel):
     """
     Audit log for tracking changes.
+    Log de auditoria para rastrear alterações.
     """
 
     ACTION_CHOICES = [
@@ -39,6 +41,7 @@ class AuditLog(TimeStampedModel):
     )
 
     # What was affected
+    # O que foi afetado
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.SET_NULL,
@@ -50,9 +53,11 @@ class AuditLog(TimeStampedModel):
     object_repr = models.CharField("Object", max_length=255, blank=True)
 
     # Change details
+    # Detalhes da alteração
     changes = models.JSONField("Changes", null=True, blank=True)
 
     # Request info
+    # Informações da requisição
     ip_address = models.GenericIPAddressField("IP Address", null=True, blank=True)
     user_agent = models.CharField("User Agent", max_length=500, blank=True)
 
@@ -79,6 +84,7 @@ def log_action(
 ):
     """
     Helper to create audit log entries.
+    Auxiliar para criar entradas de log de auditoria.
     """
     content_type = None
     object_id = None

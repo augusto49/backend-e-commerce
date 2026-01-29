@@ -1,5 +1,6 @@
 """
 Webhooks models for the E-commerce Backend.
+Modelos de Webhooks para o Backend E-commerce.
 """
 
 import hashlib
@@ -18,6 +19,7 @@ logger = logging.getLogger(__name__)
 class WebhookEndpoint(BaseModel):
     """
     Webhook endpoints for external integrations.
+    Endpoints de webhook para integrações externas.
     """
 
     name = models.CharField("Name", max_length=100)
@@ -26,6 +28,7 @@ class WebhookEndpoint(BaseModel):
     is_active = models.BooleanField("Active", default=True)
 
     # Events to send
+    # Eventos para enviar
     events = models.JSONField(
         "Events",
         default=list,
@@ -33,6 +36,7 @@ class WebhookEndpoint(BaseModel):
     )
 
     # Headers
+    # Cabeçalhos (Headers)
     custom_headers = models.JSONField(
         "Custom Headers",
         default=dict,
@@ -47,7 +51,10 @@ class WebhookEndpoint(BaseModel):
         return self.name
 
     def send(self, event_type: str, payload: dict):
-        """Send webhook to endpoint."""
+        """
+        Send webhook to endpoint.
+        Envia webhook para o endpoint.
+        """
         if not self.is_active:
             return False
 
@@ -55,6 +62,7 @@ class WebhookEndpoint(BaseModel):
             return False
 
         # Generate signature
+        # Gera assinatura (signature)
         payload_str = json.dumps(payload, sort_keys=True)
         signature = hmac.new(
             self.secret.encode(),
@@ -78,6 +86,7 @@ class WebhookEndpoint(BaseModel):
             )
 
             # Log delivery
+            # Registra entrega (log)
             WebhookDelivery.objects.create(
                 endpoint=self,
                 event_type=event_type,
@@ -105,6 +114,7 @@ class WebhookEndpoint(BaseModel):
 class WebhookDelivery(TimeStampedModel):
     """
     Track webhook deliveries.
+    Rastreia entregas de webhook.
     """
 
     endpoint = models.ForeignKey(
@@ -127,6 +137,7 @@ class WebhookDelivery(TimeStampedModel):
 def trigger_webhook(event_type: str, payload: dict):
     """
     Trigger webhooks for an event.
+    Dispara webhooks para um evento.
     """
     endpoints = WebhookEndpoint.objects.filter(is_active=True)
 

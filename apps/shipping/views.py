@@ -1,5 +1,6 @@
 """
 Shipping calculation views.
+Views de cálculo de frete.
 """
 
 import logging
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 class CalculateShippingView(APIView):
     """
     Calculate shipping cost using Correios API.
+    Calcula custo de frete usando API dos Correios.
     """
 
     permission_classes = [permissions.AllowAny]
@@ -28,6 +30,7 @@ class CalculateShippingView(APIView):
         weight = Decimal(str(request.data.get("weight", 0.5)))
         
         # Package dimensions (optional)
+        # Dimensões do pacote (opcional)
         length = int(request.data.get("length", 20))
         height = int(request.data.get("height", 10))
         width = int(request.data.get("width", 15))
@@ -46,6 +49,7 @@ class CalculateShippingView(APIView):
             )
 
             # Convert to dict for JSON response
+            # Converte para dict para resposta JSON
             result = [
                 {
                     "code": opt.code,
@@ -70,6 +74,7 @@ class CalculateShippingView(APIView):
 class TrackShipmentView(APIView):
     """
     Track a shipment using Correios tracking.
+    Rastreia uma remessa usando o rastreamento dos Correios.
     """
 
     permission_classes = [permissions.AllowAny]

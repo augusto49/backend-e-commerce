@@ -1,5 +1,6 @@
 """
 Views for the wishlist app.
+Views para o app de lista de desejos.
 """
 
 from rest_framework import permissions, status
@@ -15,6 +16,7 @@ from .serializers import WishlistAddSerializer, WishlistItemSerializer
 class WishlistView(APIView):
     """
     Get user's wishlist.
+    Obtém a lista de desejos do usuário.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -28,6 +30,7 @@ class WishlistView(APIView):
 class WishlistAddView(APIView):
     """
     Add item to wishlist.
+    Adiciona item à lista de desejos.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -70,6 +73,7 @@ class WishlistAddView(APIView):
 class WishlistRemoveView(APIView):
     """
     Remove item from wishlist.
+    Remove item da lista de desejos.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -94,6 +98,7 @@ class WishlistRemoveView(APIView):
 class WishlistCheckView(APIView):
     """
     Check if product is in wishlist.
+    Verifica se o produto está na lista de desejos.
     """
 
     permission_classes = [permissions.IsAuthenticated]

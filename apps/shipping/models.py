@@ -1,5 +1,6 @@
 """
 Shipping models for the E-commerce Backend.
+Modelos de envio/frete para o Backend E-commerce.
 """
 
 from decimal import Decimal
@@ -12,6 +13,7 @@ from apps.core.models import BaseModel, TimeStampedModel
 class ShippingMethod(BaseModel):
     """
     Shipping methods available.
+    Métodos de envio disponíveis.
     """
 
     name = models.CharField("Name", max_length=100)
@@ -29,6 +31,7 @@ class ShippingMethod(BaseModel):
     is_active = models.BooleanField("Active", default=True)
 
     # Pricing
+    # Precificação
     base_price = models.DecimalField(
         "Base Price",
         max_digits=10,
@@ -37,6 +40,7 @@ class ShippingMethod(BaseModel):
     )
 
     # Delivery time
+    # Tempo de entrega
     min_days = models.PositiveIntegerField("Minimum Days", default=1)
     max_days = models.PositiveIntegerField("Maximum Days", default=7)
 
@@ -52,6 +56,7 @@ class ShippingMethod(BaseModel):
 class ShippingRate(TimeStampedModel):
     """
     Shipping rates by region.
+    Taxas de envio por região.
     """
 
     method = models.ForeignKey(

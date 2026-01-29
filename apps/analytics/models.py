@@ -1,5 +1,6 @@
 """
 Analytics models for the E-commerce Backend.
+Modelos de Analytics para o Backend E-commerce.
 """
 
 from django.db import models
@@ -10,6 +11,7 @@ from apps.core.models import TimeStampedModel
 class PageView(TimeStampedModel):
     """
     Track page views.
+    Rastreia visualizações de página.
     """
 
     path = models.CharField("Path", max_length=500, db_index=True)
@@ -31,6 +33,7 @@ class PageView(TimeStampedModel):
 class ProductView(TimeStampedModel):
     """
     Track product views.
+    Rastreia visualizações de produto.
     """
 
     product = models.ForeignKey(
@@ -49,6 +52,7 @@ class ProductView(TimeStampedModel):
 class SalesSummary(TimeStampedModel):
     """
     Daily sales summary for reporting.
+    Resumo diário de vendas para relatórios.
     """
 
     date = models.DateField("Date", unique=True, db_index=True)

@@ -1,5 +1,6 @@
 """
 Views for the payments app.
+Views para o app de pagamentos.
 """
 
 import json
@@ -22,7 +23,10 @@ from .serializers import CreatePaymentSerializer, PaymentSerializer, RefundSeria
 
 
 class PaymentGatewayMixin:
-    """Mixin to get payment gateway."""
+    """
+    Mixin to get payment gateway.
+    Mixin para obter gateway de pagamento.
+    """
 
     def get_gateway(self, gateway_name: str):
         gateways = {
@@ -39,6 +43,7 @@ class PaymentGatewayMixin:
 class CreatePaymentView(PaymentGatewayMixin, APIView):
     """
     Create a payment for an order.
+    Cria um pagamento para um pedido.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -49,6 +54,7 @@ class CreatePaymentView(PaymentGatewayMixin, APIView):
         serializer.is_valid(raise_exception=True)
 
         # Get order
+        # Obtém pedido
         try:
             order = Order.objects.get(
                 id=serializer.validated_data["order_id"],
@@ -61,9 +67,11 @@ class CreatePaymentView(PaymentGatewayMixin, APIView):
             raise BusinessLogicException("Order is not awaiting payment.")
 
         # Get gateway
+        # Obtém gateway
         gateway = self.get_gateway(serializer.validated_data["gateway"])
 
         # Create payment in our system
+        # Cria pagamento no nosso sistema
         payment = Payment.objects.create(
             order=order,
             user=request.user,
@@ -74,6 +82,7 @@ class CreatePaymentView(PaymentGatewayMixin, APIView):
         )
 
         # Process payment with gateway
+        # Processa pagamento com gateway
         customer_data = {
             "email": request.user.email,
             "first_name": request.user.first_name,
@@ -98,6 +107,7 @@ class CreatePaymentView(PaymentGatewayMixin, APIView):
             raise PaymentFailedException(result.message)
 
         # Update payment with gateway response
+        # Atualiza pagamento com resposta do gateway
         payment.gateway_payment_id = result.payment_id
         payment.status = result.status
         payment.gateway_status = result.data.get("gateway_status", "")
@@ -112,6 +122,7 @@ class CreatePaymentView(PaymentGatewayMixin, APIView):
         payment.save()
 
         # Update order status
+        # Atualiza status do pedido
         if result.status == "approved":
             order.status = "paid"
         else:
@@ -119,6 +130,7 @@ class CreatePaymentView(PaymentGatewayMixin, APIView):
         order.save()
 
         # Record transaction
+        # Registra transação
         PaymentTransaction.objects.create(
             payment=payment,
             transaction_type="authorization",
@@ -141,6 +153,7 @@ class CreatePaymentView(PaymentGatewayMixin, APIView):
 class PaymentDetailView(APIView):
     """
     Get payment details.
+    Obtém detalhes do pagamento.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -165,6 +178,7 @@ class PaymentDetailView(APIView):
 class RefundPaymentView(PaymentGatewayMixin, APIView):
     """
     Request refund for a payment.
+    Solicita reembolso de um pagamento.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -196,6 +210,7 @@ class RefundPaymentView(PaymentGatewayMixin, APIView):
             raise BusinessLogicException(result.message)
 
         # Update payment
+        # Atualiza pagamento
         payment.status = "refunded"
         payment.refund_reason = serializer.validated_data.get("reason", "")
         from django.utils import timezone
@@ -204,6 +219,7 @@ class RefundPaymentView(PaymentGatewayMixin, APIView):
         payment.save()
 
         # Update order
+        # Atualiza pedido
         payment.order.status = "refunded"
         payment.order.save()
 
@@ -220,6 +236,7 @@ class RefundPaymentView(PaymentGatewayMixin, APIView):
 class MercadoPagoWebhookView(PaymentGatewayMixin, APIView):
     """
     Handle Mercado Pago webhooks.
+    Lida com webhooks do Mercado Pago.
     """
 
     permission_classes = [permissions.AllowAny]
@@ -243,6 +260,7 @@ class MercadoPagoWebhookView(PaymentGatewayMixin, APIView):
                     payment.save()
 
                     # Update order if payment approved
+                    # Atualiza pedido se pagamento aprovado
                     if result["status"] == "approved":
                         payment.order.status = "paid"
                         payment.order.save()
@@ -263,6 +281,7 @@ class MercadoPagoWebhookView(PaymentGatewayMixin, APIView):
 class StripeWebhookView(PaymentGatewayMixin, APIView):
     """
     Handle Stripe webhooks.
+    Lida com webhooks do Stripe.
     """
 
     permission_classes = [permissions.AllowAny]

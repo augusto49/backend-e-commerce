@@ -1,5 +1,6 @@
 """
 Views for the notifications app.
+Views para o app de notificações.
 """
 
 from rest_framework import permissions
@@ -12,6 +13,7 @@ from .models import Notification
 class NotificationListView(APIView):
     """
     Get user notifications.
+    Obtém notificações do usuário.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -41,6 +43,7 @@ class NotificationListView(APIView):
 class MarkNotificationReadView(APIView):
     """
     Mark notification as read.
+    Marca notificação como lida.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -63,6 +66,7 @@ class MarkNotificationReadView(APIView):
 class MarkAllReadView(APIView):
     """
     Mark all notifications as read.
+    Marca todas as notificações como lidas.
     """
 
     permission_classes = [permissions.IsAuthenticated]

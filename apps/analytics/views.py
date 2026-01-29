@@ -1,5 +1,6 @@
 """
 Analytics views.
+Views de Analytics.
 """
 
 from datetime import timedelta
@@ -20,6 +21,7 @@ from .models import SalesSummary
 class DashboardStatsView(APIView):
     """
     Get dashboard statistics for admin.
+    Obtém estatísticas do dashboard para admin.
     """
 
     permission_classes = [IsAdminUser]
@@ -29,14 +31,17 @@ class DashboardStatsView(APIView):
         month_start = today.replace(day=1)
 
         # Today's stats
+        # Estatísticas de hoje
         today_orders = Order.objects.filter(created_at__date=today)
         today_revenue = today_orders.aggregate(total=Sum("total"))["total"] or 0
 
         # Monthly stats
+        # Estatísticas mensais
         month_orders = Order.objects.filter(created_at__date__gte=month_start)
         month_revenue = month_orders.aggregate(total=Sum("total"))["total"] or 0
 
         # Orders by status
+        # Pedidos por status
         orders_by_status = (
             Order.objects.values("status")
             .annotate(count=Count("id"))
@@ -44,6 +49,7 @@ class DashboardStatsView(APIView):
         )
 
         # Top products
+        # Produtos mais vendidos (Top products)
         top_products = (
             Product.objects.filter(is_active=True)
             .order_by("-order_count")[:10]
@@ -72,6 +78,7 @@ class DashboardStatsView(APIView):
 class SalesReportView(APIView):
     """
     Get sales report.
+    Obtém relatório de vendas.
     """
 
     permission_classes = [IsAdminUser]

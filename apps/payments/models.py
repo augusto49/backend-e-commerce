@@ -1,5 +1,6 @@
 """
 Payment models for the E-commerce Backend.
+Modelos de pagamento para o Backend E-commerce.
 """
 
 from django.conf import settings
@@ -11,6 +12,7 @@ from apps.core.models import BaseModel, TimeStampedModel
 class Payment(BaseModel):
     """
     Payment model.
+    Modelo de pagamento.
     """
 
     STATUS_CHOICES = [
@@ -48,6 +50,7 @@ class Payment(BaseModel):
     )
 
     # Payment info
+    # Informações de pagamento
     gateway = models.CharField(
         "Gateway",
         max_length=20,
@@ -66,6 +69,7 @@ class Payment(BaseModel):
     )
 
     # Amounts
+    # Valores
     amount = models.DecimalField(
         "Amount",
         max_digits=10,
@@ -86,6 +90,7 @@ class Payment(BaseModel):
     )
 
     # Gateway response
+    # Resposta do gateway
     gateway_payment_id = models.CharField(
         "Gateway Payment ID",
         max_length=255,
@@ -104,16 +109,19 @@ class Payment(BaseModel):
     )
 
     # PIX specific
+    # Específico para PIX
     pix_qr_code = models.TextField("PIX QR Code", blank=True)
     pix_qr_code_base64 = models.TextField("PIX QR Code Base64", blank=True)
     pix_expiration = models.DateTimeField("PIX Expiration", null=True, blank=True)
 
     # Boleto specific
+    # Específico para Boleto
     boleto_barcode = models.CharField("Boleto Barcode", max_length=100, blank=True)
     boleto_url = models.URLField("Boleto URL", blank=True)
     boleto_expiration = models.DateField("Boleto Expiration", null=True, blank=True)
 
     # Refund
+    # Reembolso
     refund_reason = models.TextField("Refund Reason", blank=True)
     refunded_at = models.DateTimeField("Refunded At", null=True, blank=True)
 
@@ -129,6 +137,7 @@ class Payment(BaseModel):
 class PaymentTransaction(TimeStampedModel):
     """
     Track payment transactions/attempts.
+    Rastreia transações/tentativas de pagamento.
     """
 
     payment = models.ForeignKey(
