@@ -231,15 +231,31 @@ SPECTACULAR_SETTINGS = {
 }
 
 
-# CORS
+# CORS - Only allow specific origins (secure for production)
+# In development, the .env file should list your frontend URLs
+# In production, this should only include your actual domain
+CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_ORIGINS = env.list(
     "CORS_ALLOWED_ORIGINS",
     default=[
         "http://localhost:3000",
         "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
     ],
 )
-CORS_ALLOW_CREDENTIALS = True
+# Additional CORS headers allowed
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
 
 
 # Redis

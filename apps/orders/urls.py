@@ -15,6 +15,7 @@ admin_router.register("", OrderAdminViewSet, basename="admin-order")
 
 urlpatterns = [
     path("checkout/", CheckoutView.as_view(), name="checkout"),
-    path("", include(router.urls)),
+    # Admin routes MUST come before the catch-all router
     path("admin/", include(admin_router.urls)),
+    path("", include(router.urls)),
 ]

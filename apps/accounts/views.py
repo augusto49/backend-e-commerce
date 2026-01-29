@@ -422,3 +422,22 @@ class AdminUserViewSet(viewsets.ModelViewSet):
             )
 
         return response
+
+    @action(detail=True, methods=["post"])
+    def toggle_active(self, request, pk=None):
+        """
+        Toggle user active status.
+        Alterna status ativo do usuário.
+        """
+        user = self.get_object()
+        user.is_active = not user.is_active
+        user.save(update_fields=["is_active"])
+        
+        return Response(
+            {
+                "id": user.id,
+                "is_active": user.is_active,
+                "message": f"Usuário {'ativado' if user.is_active else 'desativado'} com sucesso",
+            },
+            status=status.HTTP_200_OK,
+        )

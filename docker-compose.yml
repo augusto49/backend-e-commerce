@@ -26,7 +26,7 @@ services:
       POSTGRES_USER: ${DB_USER:-postgres}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
     ports:
-      - "5432:5432"
+      - "5433:5432"
     restart: unless-stopped
 
   redis:
