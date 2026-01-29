@@ -310,3 +310,76 @@ class StockAdminViewSet(viewsets.ModelViewSet):
 
         serializer = self.get_serializer(low_stock, many=True)
         return Response({"success": True, "data": serializer.data})
+
+
+class CategoryAdminViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for category management.
+    ViewSet de admin para gerenciamento de categorias.
+    """
+
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "slug"]
+    ordering = ["order", "name"]
+
+    @action(detail=False, methods=["get"])
+    def tree(self, request):
+        """
+        Get category tree for admin.
+        Obtém árvore de categorias para admin.
+        """
+        root_categories = Category.objects.filter(parent=None)
+        serializer = CategoryTreeSerializer(root_categories, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(detail=True, methods=["post"])
+    def toggle_active(self, request, pk=None):
+        """
+        Toggle category active status.
+        Alterna status ativo da categoria.
+        """
+        category = self.get_object()
+        category.is_active = not category.is_active
+        category.save()
+        return Response(
+            {
+                "success": True,
+                "message": f"Category {'activated' if category.is_active else 'deactivated'}.",
+                "data": CategorySerializer(category).data,
+            }
+        )
+
+
+class BrandAdminViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for brand management.
+    ViewSet de admin para gerenciamento de marcas.
+    """
+
+    queryset = Brand.objects.all()
+    serializer_class = BrandSerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "slug"]
+    ordering = ["name"]
+
+    @action(detail=True, methods=["post"])
+    def toggle_active(self, request, pk=None):
+        """
+        Toggle brand active status.
+        Alterna status ativo da marca.
+        """
+        brand = self.get_object()
+        brand.is_active = not brand.is_active
+        brand.save()
+        return Response(
+            {
+                "success": True,
+                "message": f"Brand {'activated' if brand.is_active else 'deactivated'}.",
+                "data": BrandSerializer(brand).data,
+            }
+        )
+

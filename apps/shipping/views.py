@@ -6,15 +6,24 @@ Views de cálculo de frete.
 import logging
 from decimal import Decimal
 
-from rest_framework import permissions, status
+from rest_framework import filters, permissions, status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.exceptions import ShippingCalculationException
+from apps.core.permissions import IsAdminUser
 
+from .models import ShippingMethod, ShippingRate
+from .serializers import (
+    ShippingMethodDetailSerializer,
+    ShippingMethodSerializer,
+    ShippingRateSerializer,
+)
 from .services import CorreiosService
 
 logger = logging.getLogger(__name__)
+
 
 
 class CalculateShippingView(APIView):
@@ -108,3 +117,51 @@ class TrackShipmentView(APIView):
                 {"success": False, "message": "Could not track shipment."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class ShippingMethodAdminViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for shipping method management.
+    ViewSet de admin para gerenciamento de métodos de envio.
+    """
+
+    queryset = ShippingMethod.objects.all()
+    permission_classes = [IsAdminUser]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["name", "code", "carrier"]
+    ordering = ["name"]
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return ShippingMethodDetailSerializer
+        return ShippingMethodSerializer
+
+    @action(detail=True, methods=["post"])
+    def toggle_active(self, request, pk=None):
+        """
+        Toggle shipping method active status.
+        Alterna status ativo do método de envio.
+        """
+        method = self.get_object()
+        method.is_active = not method.is_active
+        method.save()
+        return Response(
+            {
+                "success": True,
+                "message": f"Shipping method {'activated' if method.is_active else 'deactivated'}.",
+                "data": ShippingMethodSerializer(method).data,
+            }
+        )
+
+
+class ShippingRateAdminViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for shipping rate management.
+    ViewSet de admin para gerenciamento de taxas de envio.
+    """
+
+    queryset = ShippingRate.objects.all().select_related("method")
+    serializer_class = ShippingRateSerializer
+    permission_classes = [IsAdminUser]
+    filterset_fields = ["method"]
+    ordering = ["method", "zipcode_start"]
