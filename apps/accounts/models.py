@@ -1,5 +1,6 @@
 """
 User models for the E-commerce Backend.
+Modelos de usuário para o Backend E-commerce.
 """
 
 from django.contrib.auth.models import AbstractUser, BaseUserManager
@@ -9,10 +10,16 @@ from apps.core.models import BaseModel, TimeStampedModel
 
 
 class UserManager(BaseUserManager):
-    """Custom user manager."""
+    """
+    Custom user manager.
+    Gerenciador de usuários personalizado.
+    """
 
     def create_user(self, email, password=None, **extra_fields):
-        """Create and return a regular user."""
+        """
+        Create and return a regular user.
+        Cria e retorna um usuário regular.
+        """
         if not email:
             raise ValueError("The Email field must be set")
         email = self.normalize_email(email)
@@ -22,7 +29,10 @@ class UserManager(BaseUserManager):
         return user
 
     def create_superuser(self, email, password=None, **extra_fields):
-        """Create and return a superuser."""
+        """
+        Create and return a superuser.
+        Cria e retorna um superusuário.
+        """
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         extra_fields.setdefault("is_active", True)
@@ -39,6 +49,7 @@ class UserManager(BaseUserManager):
 class User(AbstractUser):
     """
     Custom User model that uses email as the primary identifier.
+    Modelo de Usuário personalizado que usa email como identificador primário.
     """
 
     USER_TYPE_CHOICES = [
@@ -48,10 +59,12 @@ class User(AbstractUser):
     ]
 
     # Remove username field, use email instead
+    # Remove o campo username, use o email no lugar
     username = None
     email = models.EmailField("Email address", unique=True)
 
     # Additional fields
+    # Campos adicionais
     cpf = models.CharField(
         "CPF",
         max_length=14,
@@ -74,6 +87,7 @@ class User(AbstractUser):
     )
 
     # Verification and compliance
+    # Verificação e conformidade
     is_verified = models.BooleanField(
         "Email Verified",
         default=False,
@@ -91,6 +105,7 @@ class User(AbstractUser):
     )
 
     # Timestamps
+    # Carimbos de tempo (Timestamps)
     updated_at = models.DateTimeField(auto_now=True)
 
     USERNAME_FIELD = "email"
@@ -108,13 +123,17 @@ class User(AbstractUser):
 
     @property
     def full_name(self):
-        """Return the user's full name."""
+        """
+        Return the user's full name.
+        Retorna o nome completo do usuário.
+        """
         return f"{self.first_name} {self.last_name}".strip() or self.email
 
 
 class Address(BaseModel):
     """
     User address model for shipping and billing.
+    Modelo de endereço do usuário para envio e cobrança.
     """
 
     ADDRESS_TYPE_CHOICES = [
@@ -167,7 +186,10 @@ class Address(BaseModel):
 
     @property
     def full_address(self):
-        """Return the full formatted address."""
+        """
+        Return the full formatted address.
+        Retorna o endereço completo formatado.
+        """
         parts = [
             f"{self.street}, {self.number}",
             self.complement,
@@ -181,6 +203,7 @@ class Address(BaseModel):
 class Profile(TimeStampedModel):
     """
     Extended user profile model.
+    Modelo de perfil de usuário estendido.
     """
 
     user = models.OneToOneField(
@@ -213,19 +236,26 @@ class Profile(TimeStampedModel):
 
 
 # Signals to create profile on user creation
+# Signals para criar perfil na criação do usuário
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 
 @receiver(post_save, sender=User)
 def create_user_profile(sender, instance, created, **kwargs):
-    """Create a profile when a new user is created."""
+    """
+    Create a profile when a new user is created.
+    Cria um perfil quando um novo usuário é criado.
+    """
     if created:
         Profile.objects.create(user=instance)
 
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
-    """Save the profile when the user is saved."""
+    """
+    Save the profile when the user is saved.
+    Salva o perfil quando o usuário é salvo.
+    """
     if hasattr(instance, "profile"):
         instance.profile.save()

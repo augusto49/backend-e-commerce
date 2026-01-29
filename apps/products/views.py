@@ -1,5 +1,6 @@
 """
 Views for the products app.
+Views para o app de produtos.
 """
 
 from django.db.models import Q
@@ -31,6 +32,7 @@ from .serializers import (
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for product categories.
+    ViewSet para categorias de produtos.
     """
 
     queryset = Category.objects.filter(is_active=True)
@@ -45,7 +47,10 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"])
     def tree(self, request):
-        """Get category tree starting from root."""
+        """
+        Get category tree starting from root.
+        Obtém a árvore de categorias a partir da raiz.
+        """
         root_categories = Category.objects.filter(
             parent=None,
             is_active=True,
@@ -55,7 +60,10 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["get"])
     def products(self, request, slug=None):
-        """Get products in a category and its descendants."""
+        """
+        Get products in a category and its descendants.
+        Obtém produtos em uma categoria e seus descendentes.
+        """
         category = self.get_object()
         descendants = category.get_descendants(include_self=True)
         products = Product.objects.filter(
@@ -75,6 +83,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
 class BrandViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for product brands.
+    ViewSet para marcas de produtos.
     """
 
     queryset = Brand.objects.filter(is_active=True)
@@ -86,6 +95,7 @@ class BrandViewSet(viewsets.ReadOnlyModelViewSet):
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for products.
+    ViewSet para produtos.
     """
 
     queryset = Product.objects.filter(is_active=True)
@@ -108,10 +118,14 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return ProductListSerializer
 
     def retrieve(self, request, *args, **kwargs):
-        """Get product detail and increment view count."""
+        """
+        Get product detail and increment view count.
+        Obtém detalhes do produto e incrementa contagem de visualizações.
+        """
         instance = self.get_object()
 
         # Increment view count
+        # Incrementa contagem de visualizações
         Product.objects.filter(pk=instance.pk).update(
             view_count=instance.view_count + 1
         )
@@ -121,14 +135,20 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"])
     def featured(self, request):
-        """Get featured products."""
+        """
+        Get featured products.
+        Obtém produtos em destaque.
+        """
         products = self.get_queryset().filter(is_featured=True)[:12]
         serializer = ProductListSerializer(products, many=True)
         return Response({"success": True, "data": serializer.data})
 
     @action(detail=False, methods=["get"])
     def on_sale(self, request):
-        """Get products on sale."""
+        """
+        Get products on sale.
+        Obtém produtos em promoção.
+        """
         products = self.get_queryset().filter(
             sale_price__isnull=False,
             sale_price__lt=models.F("base_price"),
@@ -143,14 +163,20 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["get"])
     def best_sellers(self, request):
-        """Get best selling products."""
+        """
+        Get best selling products.
+        Obtém produtos mais vendidos.
+        """
         products = self.get_queryset().order_by("-order_count")[:12]
         serializer = ProductListSerializer(products, many=True)
         return Response({"success": True, "data": serializer.data})
 
     @action(detail=True, methods=["get"])
     def reviews(self, request, slug=None):
-        """Get product reviews."""
+        """
+        Get product reviews.
+        Obtém avaliações de produtos.
+        """
         product = self.get_object()
         reviews = product.reviews.filter(is_approved=True).order_by("-created_at")
 
@@ -168,10 +194,14 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         permission_classes=[permissions.IsAuthenticated],
     )
     def add_review(self, request, slug=None):
-        """Add a review to a product."""
+        """
+        Add a review to a product.
+        Adiciona uma avaliação a um produto.
+        """
         product = self.get_object()
 
         # Check if user already reviewed
+        # Verifica se o usuário já avaliou
         if product.reviews.filter(user=request.user).exists():
             return Response(
                 {
@@ -199,7 +229,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["get"])
     def related(self, request, slug=None):
-        """Get related products."""
+        """
+        Get related products.
+        Obtém produtos relacionados.
+        """
         product = self.get_object()
         related = (
             Product.objects.filter(
@@ -217,6 +250,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 class ProductAdminViewSet(viewsets.ModelViewSet):
     """
     Admin ViewSet for product management.
+    ViewSet de admin para gerenciamento de produtos.
     """
 
     queryset = Product.all_objects.all()
@@ -234,6 +268,7 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
 class StockAdminViewSet(viewsets.ModelViewSet):
     """
     Admin ViewSet for stock management.
+    ViewSet de admin para gerenciamento de estoque.
     """
 
     queryset = Stock.objects.all()
@@ -242,7 +277,10 @@ class StockAdminViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["patch"])
     def update_quantity(self, request, pk=None):
-        """Update stock quantity."""
+        """
+        Update stock quantity.
+        Atualiza quantidade de estoque.
+        """
         stock = self.get_object()
         serializer = StockUpdateSerializer(
             stock,
@@ -262,7 +300,10 @@ class StockAdminViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"])
     def low_stock(self, request):
-        """Get products with low stock."""
+        """
+        Get products with low stock.
+        Obtém produtos com estoque baixo.
+        """
         low_stock = Stock.objects.filter(
             quantity__lte=models.F("low_stock_threshold")
         ).select_related("product", "variation")

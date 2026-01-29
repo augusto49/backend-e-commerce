@@ -1,5 +1,6 @@
 """
 Views for the cart app.
+Views para o app de carrinho.
 """
 
 from rest_framework import permissions, status
@@ -21,13 +22,20 @@ from .serializers import (
 
 
 class CartMixin:
-    """Mixin to get or create cart."""
+    """
+    Mixin to get or create cart.
+    Mixin para obter ou criar carrinho.
+    """
 
     def get_cart(self, request):
-        """Get or create cart for user or session."""
+        """
+        Get or create cart for user or session.
+        Obtém ou cria carrinho para usuário ou sessão.
+        """
         if request.user.is_authenticated:
             cart, created = Cart.objects.get_or_create(user=request.user)
             # Merge session cart if exists
+            # Mescla carrinho da sessão se existir
             if created:
                 session_key = request.session.session_key
                 if session_key:
@@ -61,6 +69,7 @@ class CartMixin:
 class CartView(CartMixin, APIView):
     """
     Get current cart.
+    Obtém carrinho atual.
     """
 
     permission_classes = [permissions.AllowAny]
@@ -74,6 +83,7 @@ class CartView(CartMixin, APIView):
 class CartItemView(CartMixin, APIView):
     """
     Add item to cart.
+    Adiciona item ao carrinho.
     """
 
     permission_classes = [permissions.AllowAny]
@@ -88,6 +98,7 @@ class CartItemView(CartMixin, APIView):
         quantity = serializer.validated_data["quantity"]
 
         # Get product
+        # Obtém produto
         try:
             product = Product.objects.get(id=product_id, is_active=True)
         except Product.DoesNotExist:
@@ -97,6 +108,7 @@ class CartItemView(CartMixin, APIView):
             )
 
         # Get variation if provided
+        # Obtém variação se fornecida
         variation = None
         if variation_id:
             try:
@@ -112,6 +124,7 @@ class CartItemView(CartMixin, APIView):
                 )
 
         # Check stock
+        # Verifica estoque
         stock = Stock.objects.filter(
             product=product,
             variation=variation,
@@ -123,6 +136,7 @@ class CartItemView(CartMixin, APIView):
             )
 
         # Add or update cart item
+        # Adiciona ou atualiza item do carrinho
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
@@ -150,6 +164,7 @@ class CartItemView(CartMixin, APIView):
 class CartItemDetailView(CartMixin, APIView):
     """
     Update or remove cart item.
+    Atualiza ou remove item do carrinho.
     """
 
     permission_classes = [permissions.AllowAny]
@@ -161,7 +176,10 @@ class CartItemDetailView(CartMixin, APIView):
             return None
 
     def patch(self, request, item_id):
-        """Update cart item quantity."""
+        """
+        Update cart item quantity.
+        Atualiza quantidade do item do carrinho.
+        """
         cart = self.get_cart(request)
         cart_item = self.get_cart_item(cart, item_id)
 
@@ -177,6 +195,7 @@ class CartItemDetailView(CartMixin, APIView):
         quantity = serializer.validated_data["quantity"]
 
         # Check stock
+        # Verifica estoque
         stock = Stock.objects.filter(
             product=cart_item.product,
             variation=cart_item.variation,
@@ -199,7 +218,10 @@ class CartItemDetailView(CartMixin, APIView):
         )
 
     def delete(self, request, item_id):
-        """Remove item from cart."""
+        """
+        Remove item from cart.
+        Remove item do carrinho.
+        """
         cart = self.get_cart(request)
         cart_item = self.get_cart_item(cart, item_id)
 
@@ -223,12 +245,16 @@ class CartItemDetailView(CartMixin, APIView):
 class CartCouponView(CartMixin, APIView):
     """
     Apply or remove coupon from cart.
+    Aplica ou remove cupom do carrinho.
     """
 
     permission_classes = [permissions.AllowAny]
 
     def post(self, request):
-        """Apply coupon to cart."""
+        """
+        Apply coupon to cart.
+        Aplica cupom ao carrinho.
+        """
         serializer = ApplyCouponSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -260,7 +286,10 @@ class CartCouponView(CartMixin, APIView):
         )
 
     def delete(self, request):
-        """Remove coupon from cart."""
+        """
+        Remove coupon from cart.
+        Remove cupom do carrinho.
+        """
         cart = self.get_cart(request)
         cart.coupon = None
         cart.save()
@@ -277,6 +306,7 @@ class CartCouponView(CartMixin, APIView):
 class CartClearView(CartMixin, APIView):
     """
     Clear all items from cart.
+    Limpa todos os itens do carrinho.
     """
 
     permission_classes = [permissions.AllowAny]

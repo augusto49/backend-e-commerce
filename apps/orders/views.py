@@ -1,5 +1,6 @@
 """
 Views for the orders app.
+Views para o app de pedidos.
 """
 
 from django.db import transaction
@@ -28,6 +29,7 @@ from .tasks import send_order_confirmation_email
 class CheckoutView(APIView):
     """
     Create order from cart.
+    Cria pedido a partir do carrinho.
     """
 
     permission_classes = [permissions.IsAuthenticated]
@@ -38,6 +40,7 @@ class CheckoutView(APIView):
         serializer.is_valid(raise_exception=True)
 
         # Get cart
+        # Obtém carrinho
         try:
             cart = Cart.objects.get(user=request.user)
         except Cart.DoesNotExist:
@@ -47,6 +50,7 @@ class CheckoutView(APIView):
             raise CartEmptyException()
 
         # Get addresses
+        # Obtém endereços
         try:
             shipping_address = Address.objects.get(
                 id=serializer.validated_data["shipping_address_id"],
@@ -66,6 +70,7 @@ class CheckoutView(APIView):
                 raise BusinessLogicException("Billing address not found.")
 
         # Create order
+        # Cria pedido
         order = Order.objects.create(
             user=request.user,
             status="pending",
@@ -92,6 +97,7 @@ class CheckoutView(APIView):
             },
             subtotal=cart.subtotal,
             shipping_cost=0,  # TODO: Calculate from shipping method
+            # TODO: Calcular a partir do método de envio
             discount=cart.discount,
             total=cart.total,
             coupon=cart.coupon,
@@ -101,6 +107,7 @@ class CheckoutView(APIView):
         )
 
         # Create order items and update stock
+        # Cria itens do pedido e atualiza estoque
         for cart_item in cart.items.all():
             OrderItem.objects.create(
                 order=order,
@@ -115,6 +122,7 @@ class CheckoutView(APIView):
             )
 
             # Reserve stock
+            # Reserva estoque
             stock = Stock.objects.filter(
                 product=cart_item.product,
                 variation=cart_item.variation,
@@ -125,10 +133,12 @@ class CheckoutView(APIView):
                 stock.save()
 
             # Increment order count on product
+            # Incrementa contagem de pedidos no produto
             cart_item.product.order_count += cart_item.quantity
             cart_item.product.save(update_fields=["order_count"])
 
         # Record coupon usage
+        # Registra uso do cupom
         if cart.coupon:
             CouponUsage.objects.create(
                 coupon=cart.coupon,
@@ -139,6 +149,7 @@ class CheckoutView(APIView):
             cart.coupon.save(update_fields=["times_used"])
 
         # Create initial status history
+        # Cria histórico inicial de status
         OrderStatusHistory.objects.create(
             order=order,
             status="pending",
@@ -147,9 +158,11 @@ class CheckoutView(APIView):
         )
 
         # Clear cart
+        # Limpa carrinho
         cart.clear()
 
         # Send confirmation email
+        # Envia email de confirmação
         send_order_confirmation_email.delay(order.id)
 
         return Response(
@@ -165,6 +178,7 @@ class CheckoutView(APIView):
 class OrderViewSet(viewsets.ReadOnlyModelViewSet):
     """
     ViewSet for user orders.
+    ViewSet para pedidos do usuário.
     """
 
     permission_classes = [permissions.IsAuthenticated, IsOwner]
@@ -184,7 +198,10 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=["post"])
     def cancel(self, request, pk=None):
-        """Cancel an order."""
+        """
+        Cancel an order.
+        Cancela um pedido.
+        """
         order = self.get_object()
 
         if not order.can_cancel:
@@ -195,6 +212,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 
         with transaction.atomic():
             # Release reserved stock
+            # Libera estoque reservado
             for item in order.items.all():
                 stock = Stock.objects.filter(
                     product=item.product,
@@ -229,6 +247,7 @@ class OrderViewSet(viewsets.ReadOnlyModelViewSet):
 class OrderAdminViewSet(viewsets.ModelViewSet):
     """
     Admin ViewSet for order management.
+    ViewSet de admin para gerenciamento de pedidos.
     """
 
     queryset = Order.objects.all()
@@ -241,7 +260,10 @@ class OrderAdminViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["patch"])
     def update_status(self, request, pk=None):
-        """Update order status."""
+        """
+        Update order status.
+        Atualiza status do pedido.
+        """
         order = self.get_object()
         serializer = OrderStatusUpdateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -264,6 +286,7 @@ class OrderAdminViewSet(viewsets.ModelViewSet):
             )
 
             # Handle stock on status changes
+            # Lida com estoque em mudanças de status
             if new_status == "shipped":
                 for item in order.items.all():
                     stock = Stock.objects.filter(

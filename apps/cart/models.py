@@ -1,5 +1,6 @@
 """
 Cart models for the E-commerce Backend.
+Modelos de carrinho para o Backend E-commerce.
 """
 
 from decimal import Decimal
@@ -13,6 +14,7 @@ from apps.core.models import TimeStampedModel
 class Cart(TimeStampedModel):
     """
     Shopping cart model.
+    Modelo de carrinho de compras.
     """
 
     user = models.ForeignKey(
@@ -48,12 +50,18 @@ class Cart(TimeStampedModel):
 
     @property
     def subtotal(self):
-        """Calculate cart subtotal."""
+        """
+        Calculate cart subtotal.
+        Calcula o subtotal do carrinho.
+        """
         return sum(item.total_price for item in self.items.all())
 
     @property
     def discount(self):
-        """Calculate discount from coupon."""
+        """
+        Calculate discount from coupon.
+        Calcula desconto do cupom.
+        """
         if not self.coupon:
             return Decimal("0.00")
 
@@ -70,16 +78,25 @@ class Cart(TimeStampedModel):
 
     @property
     def total(self):
-        """Calculate cart total."""
+        """
+        Calculate cart total.
+        Calcula total do carrinho.
+        """
         return max(Decimal("0.00"), self.subtotal - self.discount)
 
     @property
     def item_count(self):
-        """Get total number of items in cart."""
+        """
+        Get total number of items in cart.
+        Obtém número total de itens no carrinho.
+        """
         return sum(item.quantity for item in self.items.all())
 
     def clear(self):
-        """Remove all items from cart."""
+        """
+        Remove all items from cart.
+        Remove todos os itens do carrinho.
+        """
         self.items.all().delete()
         self.coupon = None
         self.save()
@@ -88,6 +105,7 @@ class Cart(TimeStampedModel):
 class CartItem(TimeStampedModel):
     """
     Cart item model.
+    Modelo de item do carrinho.
     """
 
     cart = models.ForeignKey(
@@ -124,11 +142,15 @@ class CartItem(TimeStampedModel):
 
     @property
     def total_price(self):
-        """Calculate total price for this item."""
+        """
+        Calculate total price for this item.
+        Calcula preço total para este item.
+        """
         return self.unit_price * self.quantity
 
     def save(self, *args, **kwargs):
         # Set unit price from product/variation
+        # Define preço unitário a partir do produto/variação
         if not self.unit_price:
             if self.variation:
                 self.unit_price = self.variation.final_price

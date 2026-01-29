@@ -1,5 +1,6 @@
 """
 Order models for the E-commerce Backend.
+Modelos de pedido para o Backend E-commerce.
 """
 
 from decimal import Decimal
@@ -14,6 +15,7 @@ from apps.core.utils import generate_order_number
 class Order(BaseModel):
     """
     Order model.
+    Modelo de pedido.
     """
 
     STATUS_CHOICES = [
@@ -28,6 +30,7 @@ class Order(BaseModel):
     ]
 
     # Order identification
+    # Identificação do pedido
     number = models.CharField(
         "Order Number",
         max_length=20,
@@ -53,10 +56,12 @@ class Order(BaseModel):
     )
 
     # Addresses (stored as JSON for historical record)
+    # Endereços (armazenados como JSON para registro histórico)
     shipping_address = models.JSONField("Shipping Address")
     billing_address = models.JSONField("Billing Address", null=True, blank=True)
 
     # Pricing
+    # Precificação
     subtotal = models.DecimalField(
         "Subtotal",
         max_digits=10,
@@ -81,6 +86,7 @@ class Order(BaseModel):
     )
 
     # Coupon
+    # Cupom
     coupon = models.ForeignKey(
         "coupons.Coupon",
         on_delete=models.SET_NULL,
@@ -95,6 +101,7 @@ class Order(BaseModel):
     )
 
     # Shipping
+    # Envio / Frete
     shipping_method = models.CharField(
         "Shipping Method",
         max_length=100,
@@ -112,6 +119,7 @@ class Order(BaseModel):
     )
 
     # Notes
+    # Notas
     customer_notes = models.TextField("Customer Notes", blank=True)
     admin_notes = models.TextField("Admin Notes", blank=True)
 
@@ -135,13 +143,17 @@ class Order(BaseModel):
 
     @property
     def can_cancel(self):
-        """Check if order can be cancelled."""
+        """
+        Check if order can be cancelled.
+        Verifica se o pedido pode ser cancelado.
+        """
         return self.status in ["pending", "awaiting_payment", "paid"]
 
 
 class OrderItem(TimeStampedModel):
     """
     Order item model.
+    Modelo de item do pedido.
     """
 
     order = models.ForeignKey(
@@ -164,6 +176,7 @@ class OrderItem(TimeStampedModel):
     )
 
     # Snapshot of product info at time of order
+    # Snapshot das informações do produto no momento do pedido
     product_name = models.CharField("Product Name", max_length=255)
     product_sku = models.CharField("Product SKU", max_length=50)
     variation_name = models.CharField("Variation Name", max_length=100, blank=True)
@@ -195,6 +208,7 @@ class OrderItem(TimeStampedModel):
 class OrderStatusHistory(TimeStampedModel):
     """
     Track order status changes.
+    Rastreia mudanças de status do pedido.
     """
 
     order = models.ForeignKey(

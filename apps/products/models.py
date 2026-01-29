@@ -1,5 +1,6 @@
 """
 Product models for the E-commerce Backend.
+Modelos de produto para o Backend E-commerce.
 """
 
 from decimal import Decimal
@@ -14,6 +15,7 @@ from apps.core.models import BaseModel, TimeStampedModel
 class Category(MPTTModel, TimeStampedModel):
     """
     Product categories with hierarchical structure using MPTT.
+    Categorias de produtos com estrutura hierárquica usando MPTT.
     """
 
     name = models.CharField("Name", max_length=200)
@@ -36,6 +38,7 @@ class Category(MPTTModel, TimeStampedModel):
     order = models.PositiveIntegerField("Order", default=0)
 
     # SEO
+    # Otimização para motores de busca (SEO)
     meta_title = models.CharField("Meta Title", max_length=60, blank=True)
     meta_description = models.CharField("Meta Description", max_length=160, blank=True)
 
@@ -57,7 +60,10 @@ class Category(MPTTModel, TimeStampedModel):
 
     @property
     def full_path(self):
-        """Return the full category path."""
+        """
+        Return the full category path.
+        Retorna o caminho completo da categoria.
+        """
         ancestors = self.get_ancestors(include_self=True)
         return " > ".join([a.name for a in ancestors])
 
@@ -65,6 +71,7 @@ class Category(MPTTModel, TimeStampedModel):
 class Brand(TimeStampedModel):
     """
     Product brands.
+    Marcas de produtos.
     """
 
     name = models.CharField("Name", max_length=200)
@@ -96,9 +103,11 @@ class Brand(TimeStampedModel):
 class Product(BaseModel):
     """
     Main product model.
+    Modelo principal de produto.
     """
 
     # Basic info
+    # Informações básicas
     sku = models.CharField("SKU", max_length=50, unique=True)
     name = models.CharField("Name", max_length=255)
     slug = models.SlugField("Slug", max_length=280, unique=True)
@@ -110,6 +119,7 @@ class Product(BaseModel):
     )
 
     # Relations
+    # Relacionamentos
     category = models.ForeignKey(
         Category,
         on_delete=models.SET_NULL,
@@ -125,6 +135,7 @@ class Product(BaseModel):
     )
 
     # Pricing
+    # Precificação
     base_price = models.DecimalField(
         "Base Price",
         max_digits=10,
@@ -146,10 +157,12 @@ class Product(BaseModel):
     )
 
     # Status
+    # Status
     is_active = models.BooleanField("Active", default=True)
     is_featured = models.BooleanField("Featured", default=False)
 
     # Physical attributes
+    # Atributos físicos
     weight = models.DecimalField(
         "Weight (kg)",
         max_digits=8,
@@ -180,10 +193,12 @@ class Product(BaseModel):
     )
 
     # SEO
+    # Otimização para motores de busca (SEO)
     meta_title = models.CharField("Meta Title", max_length=60, blank=True)
     meta_description = models.CharField("Meta Description", max_length=160, blank=True)
 
     # Stats
+    # Estatísticas
     view_count = models.PositiveIntegerField("View Count", default=0)
     order_count = models.PositiveIntegerField("Order Count", default=0)
 
@@ -208,12 +223,18 @@ class Product(BaseModel):
 
     @property
     def current_price(self):
-        """Return the current price (sale or base)."""
+        """
+        Return the current price (sale or base).
+        Retorna o preço atual (promocional ou base).
+        """
         return self.sale_price if self.sale_price else self.base_price
 
     @property
     def discount_percentage(self):
-        """Return the discount percentage."""
+        """
+        Return the discount percentage.
+        Retorna a porcentagem de desconto.
+        """
         if self.sale_price and self.base_price > 0:
             discount = ((self.base_price - self.sale_price) / self.base_price) * 100
             return int(discount)
@@ -221,17 +242,26 @@ class Product(BaseModel):
 
     @property
     def is_on_sale(self):
-        """Check if product is on sale."""
+        """
+        Check if product is on sale.
+        Verifica se o produto está em promoção.
+        """
         return self.sale_price is not None and self.sale_price < self.base_price
 
     @property
     def primary_image(self):
-        """Get the primary product image."""
+        """
+        Get the primary product image.
+        Obtém a imagem principal do produto.
+        """
         return self.images.filter(is_primary=True).first()
 
     @property
     def average_rating(self):
-        """Calculate average rating from reviews."""
+        """
+        Calculate average rating from reviews.
+        Calcula a avaliação média das avaliações.
+        """
         from django.db.models import Avg
 
         result = self.reviews.filter(is_approved=True).aggregate(avg=Avg("rating"))
@@ -239,7 +269,10 @@ class Product(BaseModel):
 
     @property
     def total_stock(self):
-        """Calculate total available stock."""
+        """
+        Calculate total available stock.
+        Calcula o estoque total disponível.
+        """
         return sum(
             stock.available_quantity
             for stock in self.stock_items.all()
@@ -249,6 +282,7 @@ class Product(BaseModel):
 class ProductVariation(BaseModel):
     """
     Product variations (e.g., size, color).
+    Variações de produto (ex: tamanho, cor).
     """
 
     product = models.ForeignKey(
@@ -291,12 +325,18 @@ class ProductVariation(BaseModel):
 
     @property
     def full_sku(self):
-        """Return the full SKU including product SKU."""
+        """
+        Return the full SKU including product SKU.
+        Retorna o SKU completo incluindo o SKU do produto.
+        """
         return f"{self.product.sku}-{self.sku_suffix}" if self.sku_suffix else self.product.sku
 
     @property
     def final_price(self):
-        """Calculate the final price with modifier."""
+        """
+        Calculate the final price with modifier.
+        Calcula o preço final com modificador.
+        """
         base = self.product.current_price
         return base + self.price_modifier
 
@@ -304,6 +344,7 @@ class ProductVariation(BaseModel):
 class ProductImage(TimeStampedModel):
     """
     Product images.
+    Imagens do produto.
     """
 
     product = models.ForeignKey(
@@ -339,6 +380,7 @@ class ProductImage(TimeStampedModel):
 class Stock(TimeStampedModel):
     """
     Stock management for products and variations.
+    Gestão de estoque para produtos e variações.
     """
 
     product = models.ForeignKey(
@@ -381,23 +423,33 @@ class Stock(TimeStampedModel):
 
     @property
     def available_quantity(self):
-        """Return the available quantity (total - reserved)."""
+        """
+        Return the available quantity (total - reserved).
+        Retorna a quantidade disponível (total - reservado).
+        """
         return max(0, self.quantity - self.reserved_quantity)
 
     @property
     def is_low_stock(self):
-        """Check if stock is below threshold."""
+        """
+        Check if stock is below threshold.
+        Verifica se o estoque está abaixo do limite.
+        """
         return self.available_quantity <= self.low_stock_threshold
 
     @property
     def is_in_stock(self):
-        """Check if item is in stock."""
+        """
+        Check if item is in stock.
+        Verifica se o item está em estoque.
+        """
         return self.available_quantity > 0
 
 
 class ProductReview(BaseModel):
     """
     Product reviews and ratings.
+    Avaliações e classificações de produtos.
     """
 
     product = models.ForeignKey(
