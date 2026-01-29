@@ -8,6 +8,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from .views import (
     AddressViewSet,
+    AdminUserViewSet,
     CustomTokenObtainPairView,
     LGPDConsentUpdateView,
     LGPDDeleteView,
@@ -24,6 +25,9 @@ from .views import (
 
 router = DefaultRouter()
 router.register("addresses", AddressViewSet, basename="address")
+
+admin_router = DefaultRouter()
+admin_router.register("users", AdminUserViewSet, basename="admin-user")
 
 urlpatterns = [
     # Authentication
@@ -54,4 +58,6 @@ urlpatterns = [
     path("lgpd/export/", LGPDExportView.as_view(), name="lgpd_export"),
     path("lgpd/delete/", LGPDDeleteView.as_view(), name="lgpd_delete"),
     path("lgpd/consent/", LGPDConsentUpdateView.as_view(), name="lgpd_consent"),
+    # Admin
+    path("admin/", include(admin_router.urls)),
 ]

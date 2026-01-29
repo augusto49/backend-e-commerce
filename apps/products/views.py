@@ -264,6 +264,40 @@ class ProductAdminViewSet(viewsets.ModelViewSet):
     search_fields = ["name", "sku"]
     ordering = ["-created_at"]
 
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request):
+        """
+        Export products to CSV.
+        Exporta produtos para CSV.
+        """
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="products.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(
+            ["ID", "SKU", "Name", "Category", "Brand", "Price", "Stock", "Active"]
+        )
+
+        products = self.filter_queryset(self.get_queryset())
+        for product in products:
+            writer.writerow(
+                [
+                    product.id,
+                    product.sku,
+                    product.name,
+                    product.category.name if product.category else "",
+                    product.brand.name if product.brand else "",
+                    product.base_price,
+                    product.total_stock,
+                    product.is_active,
+                ]
+            )
+
+        return response
+
 
 class StockAdminViewSet(viewsets.ModelViewSet):
     """

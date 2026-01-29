@@ -258,6 +258,38 @@ class OrderAdminViewSet(viewsets.ModelViewSet):
             return OrderDetailSerializer
         return OrderListSerializer
 
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request):
+        """
+        Export orders to CSV.
+        Exporta pedidos para CSV.
+        """
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="orders.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(
+            ["Order #", "Customer", "Total", "Status", "Payment", "Date"]
+        )
+
+        orders = self.filter_queryset(self.get_queryset())
+        for order in orders:
+            writer.writerow(
+                [
+                    order.number,
+                    order.user.email,
+                    order.total,
+                    order.status,
+                    order.payment_status,
+                    order.created_at.strftime("%Y-%m-%d %H:%M"),
+                ]
+            )
+
+        return response
+
     @action(detail=True, methods=["patch"])
     def update_status(self, request, pk=None):
         """

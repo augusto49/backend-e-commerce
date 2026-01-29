@@ -5,13 +5,13 @@ Views para o app de contas.
 
 from django.contrib.auth import get_user_model
 from django.utils import timezone
-from rest_framework import generics, permissions, status, viewsets
+from rest_framework import filters, generics, permissions, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-from apps.core.permissions import IsOwner
+from apps.core.permissions import IsAdminUser, IsOwner
 
 from .models import Address, Profile
 from .serializers import (
@@ -375,3 +375,50 @@ class LGPDConsentUpdateView(generics.GenericAPIView):
                 "data": ProfileSerializer(profile).data,
             }
         )
+
+
+class AdminUserViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for user management.
+    ViewSet de admin para gerenciamento de usuários.
+    """
+
+    queryset = User.objects.all().select_related("profile")
+    serializer_class = UserSerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [filters.SearchFilter, filters.OrderingFilter]
+    search_fields = ["email", "first_name", "last_name", "cpf"]
+    ordering = ["-date_joined"]
+
+    @action(detail=False, methods=["get"])
+    def export_csv(self, request):
+        """
+        Export users to CSV.
+        Exporta usuários para CSV.
+        """
+        import csv
+        from django.http import HttpResponse
+
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = 'attachment; filename="users.csv"'
+
+        writer = csv.writer(response)
+        writer.writerow(
+            ["ID", "Name", "Email", "CPF", "Phone", "Active", "Joined"]
+        )
+
+        users = self.filter_queryset(self.get_queryset())
+        for user in users:
+            writer.writerow(
+                [
+                    user.id,
+                    user.full_name,
+                    user.email,
+                    user.cpf,
+                    user.phone,
+                    user.is_active,
+                    user.date_joined.strftime("%Y-%m-%d %H:%M"),
+                ]
+            )
+
+        return response

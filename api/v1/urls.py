@@ -43,5 +43,8 @@ urlpatterns = [
     # Audit (Admin)
     # Auditoria (Admin)
     path("audit/", include("apps.audit.urls")),
+    # Settings (Admin)
+    # Configurações (Admin)
+    path("settings/", include("apps.settings.urls")),
 ]
 
