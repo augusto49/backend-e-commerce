@@ -1,0 +1,60 @@
+# Django Core
+Django==5.1.5
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.4.0
+django-cors-headers==4.6.0
+django-filter==24.3
+django-environ==0.12.0
+
+# Database
+psycopg[binary]==3.2.4
+django-redis==5.4.0
+
+# Async Tasks
+celery[redis]==5.4.0
+django-celery-beat==2.7.0
+django-celery-results==2.5.1
+
+# API Documentation
+drf-spectacular==0.28.0
+
+# Security
+django-axes==7.0.1
+
+# Categories (MPTT)
+django-mptt==0.16.0
+
+# Storage
+django-storages==1.14.4
+boto3==1.36.4
+
+# Utils
+Pillow==11.1.0
+python-slugify==8.0.4
+requests==2.32.3
+
+# Payments
+mercadopago==2.2.3
+stripe==11.4.1
+
+# Shipping
+brazilcep==6.5.0
+
+# Notifications
+django-templated-email==3.0.1
+twilio==9.4.3
+
+# Testing
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+factory-boy==3.3.1
+faker==33.1.0
+
+# Code Quality
+black==24.10.0
+isort==5.13.2
+flake8==7.1.1
+
+# Gunicorn for production
+gunicorn==23.0.0

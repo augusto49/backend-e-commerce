@@ -1,0 +1,271 @@
+"""
+Views for the products app.
+"""
+
+from django.db.models import Q
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import filters, generics, permissions, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from apps.core.pagination import LargeResultsSetPagination
+from apps.core.permissions import IsAdminUser
+
+from .filters import ProductFilter
+from .models import Brand, Category, Product, ProductReview, ProductVariation, Stock
+from .serializers import (
+    BrandSerializer,
+    CategorySerializer,
+    CategoryTreeSerializer,
+    ProductAdminSerializer,
+    ProductDetailSerializer,
+    ProductListSerializer,
+    ProductReviewCreateSerializer,
+    ProductReviewSerializer,
+    ProductVariationSerializer,
+    StockSerializer,
+    StockUpdateSerializer,
+)
+
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for product categories.
+    """
+
+    queryset = Category.objects.filter(is_active=True)
+    serializer_class = CategorySerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "slug"
+
+    def get_serializer_class(self):
+        if self.action == "tree":
+            return CategoryTreeSerializer
+        return CategorySerializer
+
+    @action(detail=False, methods=["get"])
+    def tree(self, request):
+        """Get category tree starting from root."""
+        root_categories = Category.objects.filter(
+            parent=None,
+            is_active=True,
+        ).order_by("order", "name")
+        serializer = self.get_serializer(root_categories, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(detail=True, methods=["get"])
+    def products(self, request, slug=None):
+        """Get products in a category and its descendants."""
+        category = self.get_object()
+        descendants = category.get_descendants(include_self=True)
+        products = Product.objects.filter(
+            category__in=descendants,
+            is_active=True,
+        ).order_by("-created_at")
+
+        page = self.paginate_queryset(products)
+        if page is not None:
+            serializer = ProductListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ProductListSerializer(products, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+
+class BrandViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for product brands.
+    """
+
+    queryset = Brand.objects.filter(is_active=True)
+    serializer_class = BrandSerializer
+    permission_classes = [permissions.AllowAny]
+    lookup_field = "slug"
+
+
+class ProductViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    ViewSet for products.
+    """
+
+    queryset = Product.objects.filter(is_active=True)
+    permission_classes = [permissions.AllowAny]
+    pagination_class = LargeResultsSetPagination
+    lookup_field = "slug"
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    filterset_class = ProductFilter
+    search_fields = ["name", "description", "sku"]
+    ordering_fields = ["name", "base_price", "created_at", "order_count"]
+    ordering = ["-created_at"]
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return ProductDetailSerializer
+        return ProductListSerializer
+
+    def retrieve(self, request, *args, **kwargs):
+        """Get product detail and increment view count."""
+        instance = self.get_object()
+
+        # Increment view count
+        Product.objects.filter(pk=instance.pk).update(
+            view_count=instance.view_count + 1
+        )
+
+        serializer = self.get_serializer(instance)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(detail=False, methods=["get"])
+    def featured(self, request):
+        """Get featured products."""
+        products = self.get_queryset().filter(is_featured=True)[:12]
+        serializer = ProductListSerializer(products, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(detail=False, methods=["get"])
+    def on_sale(self, request):
+        """Get products on sale."""
+        products = self.get_queryset().filter(
+            sale_price__isnull=False,
+            sale_price__lt=models.F("base_price"),
+        )
+        page = self.paginate_queryset(products)
+        if page is not None:
+            serializer = ProductListSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ProductListSerializer(products, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(detail=False, methods=["get"])
+    def best_sellers(self, request):
+        """Get best selling products."""
+        products = self.get_queryset().order_by("-order_count")[:12]
+        serializer = ProductListSerializer(products, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(detail=True, methods=["get"])
+    def reviews(self, request, slug=None):
+        """Get product reviews."""
+        product = self.get_object()
+        reviews = product.reviews.filter(is_approved=True).order_by("-created_at")
+
+        page = self.paginate_queryset(reviews)
+        if page is not None:
+            serializer = ProductReviewSerializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = ProductReviewSerializer(reviews, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+    @action(
+        detail=True,
+        methods=["post"],
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def add_review(self, request, slug=None):
+        """Add a review to a product."""
+        product = self.get_object()
+
+        # Check if user already reviewed
+        if product.reviews.filter(user=request.user).exists():
+            return Response(
+                {
+                    "success": False,
+                    "message": "You have already reviewed this product.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = ProductReviewCreateSerializer(
+            data=request.data,
+            context={"request": request, "product": product},
+        )
+        serializer.is_valid(raise_exception=True)
+        review = serializer.save()
+
+        return Response(
+            {
+                "success": True,
+                "message": "Review submitted for moderation.",
+                "data": ProductReviewSerializer(review).data,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["get"])
+    def related(self, request, slug=None):
+        """Get related products."""
+        product = self.get_object()
+        related = (
+            Product.objects.filter(
+                category=product.category,
+                is_active=True,
+            )
+            .exclude(pk=product.pk)
+            .order_by("?")[:6]
+        )
+        serializer = ProductListSerializer(related, many=True)
+        return Response({"success": True, "data": serializer.data})
+
+
+# Admin ViewSets
+class ProductAdminViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for product management.
+    """
+
+    queryset = Product.all_objects.all()
+    serializer_class = ProductAdminSerializer
+    permission_classes = [IsAdminUser]
+    filter_backends = [
+        DjangoFilterBackend,
+        filters.SearchFilter,
+        filters.OrderingFilter,
+    ]
+    search_fields = ["name", "sku"]
+    ordering = ["-created_at"]
+
+
+class StockAdminViewSet(viewsets.ModelViewSet):
+    """
+    Admin ViewSet for stock management.
+    """
+
+    queryset = Stock.objects.all()
+    serializer_class = StockSerializer
+    permission_classes = [IsAdminUser]
+
+    @action(detail=True, methods=["patch"])
+    def update_quantity(self, request, pk=None):
+        """Update stock quantity."""
+        stock = self.get_object()
+        serializer = StockUpdateSerializer(
+            stock,
+            data=request.data,
+            partial=True,
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.update(stock, serializer.validated_data)
+
+        return Response(
+            {
+                "success": True,
+                "message": "Stock updated successfully.",
+                "data": StockSerializer(stock).data,
+            }
+        )
+
+    @action(detail=False, methods=["get"])
+    def low_stock(self, request):
+        """Get products with low stock."""
+        low_stock = Stock.objects.filter(
+            quantity__lte=models.F("low_stock_threshold")
+        ).select_related("product", "variation")
+
+        serializer = self.get_serializer(low_stock, many=True)
+        return Response({"success": True, "data": serializer.data})
