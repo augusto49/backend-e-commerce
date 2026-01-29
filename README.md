@@ -54,16 +54,17 @@ Um backend robusto e escalável para plataforma de E-commerce, desenvolvido com 
    ```
 
 2. **Configure as Variáveis de Ambiente**
-   Crie um arquivo `.env` na raiz baseado no exemplo (se houver) ou use as configurações padrão do docker-compose:
+   Para configurar o ambiente localmente, faça uma cópia do arquivo de exemplo:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Em seguida, edite o arquivo `.env` com suas credenciais. As variáveis do **Correios** são opcionais para teste (use um CEP de origem válido):
 
    ```env
-   SECRET_KEY=sua_chave_secreta_aqui
-   DEBUG=True
-   ALLOWED_HOSTS=*
-   DB_NAME=ecommerce
-   DB_USER=postgres
-   DB_PASSWORD=postgres
-   DB_HOST=db
+   # Exemplo
+   CORREIOS_ORIGIN_CEP=01310100
    ```
 
 3. **Inicie os Containers**
